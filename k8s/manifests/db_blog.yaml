@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-blog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-blog
+  template:
+    metadata:
+      labels:
+        app: db-blog
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: POSTGRES_PASSWORD_BLOG
+              #value: example
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-map
+                  key: POSTGRES_DB_BLOG
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-blog-storage
+      volumes:
+        - name: db-blog-storage
+          persistentVolumeClaim:
+            claimName: db-blog-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-blog
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: db-blog

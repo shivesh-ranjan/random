@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-auth
+  template:
+    metadata:
+      labels:
+        app: db-auth
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: POSTGRES_PASSWORD_AUTH
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-map
+                  key: POSTGRES_DB_AUTH
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-auth-storage
+      volumes:
+        - name: db-auth-storage
+          persistentVolumeClaim:
+            claimName: db-auth-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-auth
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: db-auth

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: derekshaw/gatewaymicro:1.0
+          #ports:
+          #  - containerPort: 8080
+          env:
+            - name: DB_SOURCE
+              value: postgresql://postgres:example@db-auth/authDB?sslmode=disable
+            - name: BLOG_MICRO_URL
+              value: http://blog:8000
+            - name: GIN_MODE
+              value: release
+          command: ["/app/wait-for.sh", "db-auth:5432", "--", "/app/start.sh"]
+          args: ["/app/main"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  selector:
+    app: auth
