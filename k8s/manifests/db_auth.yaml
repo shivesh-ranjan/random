@@ -29,6 +29,7 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: db-auth-storage
+              subPath: postgres
       volumes:
         - name: db-auth-storage
           persistentVolumeClaim:
