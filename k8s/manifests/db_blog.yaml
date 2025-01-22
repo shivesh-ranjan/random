@@ -30,6 +30,7 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: db-blog-storage
+              subPath: postgres
       volumes:
         - name: db-blog-storage
           persistentVolumeClaim:
