@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: auth
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: auth
@@ -32,10 +32,11 @@ kind: Service
 metadata:
   name: auth
 spec:
-  type: NodePort
+  #type: LoadBalancer
+  #type: NodePort
   ports:
     - port: 8080
       targetPort: 8080
-      nodePort: 30080
+        #nodePort: 30080
   selector:
     app: auth
