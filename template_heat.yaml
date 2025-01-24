@@ -1,0 +1,185 @@
+heat_template_version: 2016-10-14
+
+description: for creation of 2 vms, 1 network, 1 security group, 2 volumes, 1 LB, 1 subnet, 1 Router, 2 floating IPs, 1 Key Pair, Ports, etc,
+
+parameters:
+  external_network:
+    type: string
+    default: External_Net_MUM
+  subnet_cidr:
+    type: string
+    default: 192.168.1.0/24
+  image_id:
+    type: string
+    default: Ubuntu-20.04
+  flavor_id:
+    type: string
+    default: S.4
+  public_subnet_id:
+    type: string
+    default: e1f49a48-44f4-4204-a5ca-6c0a31d7e5dd
+
+resources:
+
+  # neutron
+  internal_network:
+    type: OS::Neutron::Net
+    properties:
+      name: demoNetwork
+  internal_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: demoSubnet
+      network: { get_resource: internal_network }
+      cidr: { get_param: subnet_cidr }
+      enable_dhcp: true
+      ip_version: 4
+  router:
+    type: OS::Neutron::Router
+    properties:
+      name: demoRouter
+      external_gateway_info:
+        network: { get_param: external_network }
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: router }
+      subnet: { get_resource: internal_subnet }
+
+  # security group
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: demoSecurityGroup
+      rules:
+       - direction: ingress
+         protocol: icmp
+       - direction: ingress
+         protocol: tcp
+         port_range_max: 22
+         port_range_min: 22
+
+  # floating ip 1
+  test_floating_ip_1:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: external_network }
+
+  # floating ip 2
+  test_floating_ip_2:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: external_network }
+
+  # port 1
+  instance_port_1:
+   type: OS::Neutron::Port
+   depends_on:
+    - router
+    - router_interface
+   properties:
+     network: { get_resource: internal_network }
+     security_groups:
+      - { get_resource: security_group }
+
+  # port 2
+  instance_port_2:
+   type: OS::Neutron::Port
+   depends_on:
+    - router
+    - router_interface
+   properties:
+     network: { get_resource: internal_network }
+     security_groups:
+      - { get_resource: security_group }
+
+  # key pair:  ssh-keygen -t ed25519 -C "shiveshranjan2003@gmail.com"
+  test_keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      name: demoKeyPair
+      public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMwnhWwsLEwcJA0r/Hjq8s8zeccqqAtqPf0tzpkBFLb7 shiveshranjan2003@gmail.com"
+
+  # server instance
+  server_instance_1:
+    type: OS::Nova::Server
+    depends_on:
+     - test_keypair
+    properties:
+      name: demoInstance1
+      flavor: { get_param: flavor_id }
+      key_name: { get_resource: test_keypair }
+      block_device_mapping_v2:
+       - device_name: /dev/vda
+         image: { get_param: image_id }
+         volume_size: 25
+         boot_index: 0
+         delete_on_termination: True
+      networks:
+       - port: { get_resource: instance_port_1 }
+         floating_ip: { get_resource: test_floating_ip_1 }
+
+  # server instance
+  server_instance_2:
+    type: OS::Nova::Server
+    depends_on:
+     - test_keypair
+    properties:
+      name: demoInstance2
+      flavor: { get_param: flavor_id }
+      key_name: { get_resource: test_keypair }
+      block_device_mapping_v2:
+       - device_name: /dev/vda
+         image: { get_param: image_id }
+         volume_size: 25
+         boot_index: 0
+         delete_on_termination: True
+      networks:
+       - port: { get_resource: instance_port_2 }
+         floating_ip: { get_resource: test_floating_ip_2 }
+
+  # Load Balancer
+
+  loadbalancer:
+    type: OS::Octavia::LoadBalancer
+    properties:
+      name: demoLB
+      vip_subnet: { get_param: public_subnet_id }
+
+  listener:
+    type: OS::Octavia::Listener
+    properties:
+      name: demoLbListener
+      protocol: HTTP
+      protocol_port: 8080
+      loadbalancer: { get_resource: loadbalancer }
+
+  pool:
+    type: OS::Octavia::Pool
+    properties:
+      name: testLbPool
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTP
+      listener: { get_resource: listener }
+
+  member_1:
+    type: OS::Octavia::PoolMember
+    properties:
+      address: { get_attr: [test_floating_ip_1, floating_ip_address] }
+      protocol_port: 8080
+      subnet: { get_resource: internal_subnet }
+      pool: { get_resource: pool }
+
+  member_2:
+    type: OS::Octavia::PoolMember
+    properties:
+      address: { get_attr: [test_floating_ip_2, floating_ip_address] }
+      protocol_port: 8080
+      subnet: { get_resource: internal_subnet }
+      pool: { get_resource: pool }
+
+outputs:
+  ip1:
+    value: { get_attr: [test_floating_ip_1, floating_ip_address] }
+  ip2:
+    value: { get_attr: [test_floating_ip_2, floating_ip_address] }
