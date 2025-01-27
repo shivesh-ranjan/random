@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testing-kubectl
+  namespace: testing
+spec:
+  containers:
+    - image: bibinwilson/docker-kubectl:latest
+      name: kubectl
+  serviceAccountName: derekshaw
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testing2-kubectl
+  namespace: testing2
+spec:
+  containers:
+    - image: bibinwilson/docker-kubectl:latest
+      name: kubectl
+  serviceAccountName: derekshawpro
