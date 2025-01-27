@@ -1,0 +1,11 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: derekshaw
+  namespace: testing
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: derekshawpro
+  namespace: testing2
