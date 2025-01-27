@@ -1,0 +1,17 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: testing-derekshaw-token
+  namespace: testing
+  annotations:
+    kubernetes.io/service-account.name: derekshaw
+type: kubernetes.io/service-account-token
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: testing2-derekshawpro-token
+  namespace: testing2
+  annotations:
+    kubernetes.io/service-account.name: derekshawpro
+type: kubernetes.io/service-account-token
