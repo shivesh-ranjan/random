@@ -9,7 +9,7 @@ set -euxo pipefail
 
 PUBLIC_IP_ACCESS="true"
 NODENAME=$(hostname -s)
-POD_CIDR="10.244.0.0/16"
+POD_CIDR="192.168.0.0/16"
 
 # Pull required images
 
@@ -40,4 +40,4 @@ sudo chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
 
 # Install Claico Network Plugin Network 
 
-kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
