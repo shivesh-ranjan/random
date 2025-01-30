@@ -16,6 +16,11 @@ spec:
         - name: frontend
           image: derekshaw/frontend:0.1
           command: ["npm", "run", "dev"]
+          resources:
+            limits:
+              cpu: "5000m"
+            requests:
+              cpu: "2000m"
 ---
 apiVersion: v1
 kind: Service
