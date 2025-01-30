@@ -18,9 +18,9 @@ spec:
           command: ["npm", "run", "dev"]
           resources:
             limits:
-              cpu: "5000m"
+              cpu: "500m"
             requests:
-              cpu: "2000m"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
