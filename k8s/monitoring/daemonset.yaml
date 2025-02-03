@@ -46,14 +46,15 @@ spec:
               cpu: 102m
               memory: 180Mi
           volumeMounts:
-               mountPropagation: HostToContainer
+            - mountPath: /host/sys
+              mountPropagation: HostToContainer
               name: sys
               readOnly: true
             - mountPath: /host/root
               mountPropagation: HostToContainer
               name: root
               readOnly: true
-       volumes:
+      volumes:
             - hostPath:
                 path: /sys
               name: sys
