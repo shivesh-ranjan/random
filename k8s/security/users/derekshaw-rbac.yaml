@@ -1,0 +1,21 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rbac-for-derekshaw
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rolebinding-for-derekshaw
+subjects:
+  - kind: User
+    name: derekshaw
+    namespace: default
+roleRef:
+  kind: Role
+  name: rbac-for-derekshaw
+  apiGroup: rbac.authorization.k8s.io
