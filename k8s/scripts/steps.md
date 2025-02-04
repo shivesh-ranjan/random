@@ -80,7 +80,17 @@
    kubectl create namespace monitoring
    helm install my-grafana grafana/grafana --namespace monitoring
    ```
-
+5. Deploying ArgoCD:
+   ```
+   kubectl create namespace argocd
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   ```
+   ```
+   kubectl edit secret -n argocd argocd-initial-admin-secret
+   ```
+   ```
+   kubectl edit svc argocd-server -n argocd
+   ```
 
 Credits:
 * https://openmetal.io/docs/manuals/kubernetes-guides/installing-the-kubernetes-openstack-cloud-controller-manager
