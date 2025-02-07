@@ -1,0 +1,5 @@
+- name: Get join command from master
+  set_fact:
+    join_command: "{{ hostvars[groups['master'][0]]['join_command'] }}"
+- name: Join the k8s cluster
+  command: "{{ join_command }}"
