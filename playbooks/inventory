@@ -1,0 +1,13 @@
+# Master nodes
+master1 ansible_host=45.198.13.195 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/syek/test.pem
+
+# Worker nodes
+worker1 ansible_host=45.198.14.23 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/syek/test.pem
+worker2 ansible_host=45.198.14.92 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/syek/test.pem
+
+[master]
+master1
+
+[workers]
+worker1
+worker2
