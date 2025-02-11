@@ -14,6 +14,8 @@
   command: kubeadm init --control-plane-endpoint="{{ master_ip }}" --apiserver-cert-extra-sans="{{ master_ip }}" --pod-network-cidr="{{ pod_network_cidr }}" --ignore-preflight-errors Swap
   register: kubeadm_init
   become: yes
+  args:
+    creates: /etc/kubernetes/admin.conf
 
 # - name: Create .kube directory
 #   file:
@@ -48,6 +50,8 @@
     chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
   become: yes
   ignore_errors: yes
+  args:
+    creates: "{{ ansible_env.HOME }}/.kube/config"
 
 # - name: Create the .kube directory in the user's home
 #   become: yes
