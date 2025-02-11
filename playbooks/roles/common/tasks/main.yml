@@ -60,10 +60,14 @@
 
 - name: Downloading CRIO release key and generating gpg
   shell: curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/{{ crio_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
   become: yes
 
 - name: Adding repo to apt
   shell: echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/{{ crio_version }}/deb/ /" | tee /etc/apt/sources.list.d/cri-o.list
+  args:
+    creates: /etc/apt/sources.list.d/cri-o.list
   become: yes
 
 - name: Update apt cache
@@ -87,11 +91,15 @@
   shell: |
     curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ k8s_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
   become: yes
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 - name: Add K8s Repo
   shell: |
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ k8s_version }}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
   become: yes
+  args:
+    creates: /etc/apt/sources.list.d/kubernetes.list
 
 - name: Update apt cache
   apt:
