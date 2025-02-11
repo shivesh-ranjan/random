@@ -1,0 +1,123 @@
+- name: Setup K8s Cluster
+  hosts: all
+  become: yes
+  roles:
+    - role: common
+
+- name: Setup Master node
+  hosts: master
+  become: yes
+  roles:
+    - role: master
+
+- name: Setup worker nodes
+  hosts: workers
+  become: yes
+  roles:
+    - role: worker
+
+- name: Setup CNI on master
+  hosts: master
+  become: yes
+  tasks:
+    - name: Install CNI
+      shell: |
+        CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+        CLI_ARCH=amd64
+        if [ "$(uname -m)" = "aarch64" ]; then CLI_ARCH=arm64; fi
+        curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+        sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+        tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
+        rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+        cilium install --version 1.16.6
+      args:
+        executable: /bin/bash
+        creates: /usr/local/bin/cilium
+      become: yes
+
+- name: Play for OCCM
+  hosts: master
+  become: yes
+  tasks:
+    - name: Copy cloud conf file
+      copy:
+        src: /home/ubuntu/cloud.conf
+        dest: /home/ubuntu/cloud.conf
+        follow: yes
+
+    - name: Create OCCM secret
+      command: kubectl create secret -n kube-system generic cloud-config --from-file=/home/ubuntu/cloud.conf
+      ignore_errors: true
+
+    - name: Installing OCCM
+      shell: |
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-roles.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+
+    - name: Cloning CSI repo
+      git:
+        repo: https://github.com/kubernetes/cloud-provider-openstack
+        dest: /home/ubuntu/cloud-provider-openstack
+        version: tags/v1.30.0
+        force: true
+
+    - name: Remove default CSI secret
+      file:
+        path: /home/ubuntu/cloud-provider-openstack/manifests/cinder-csi-plugin/csi-secret-cinderplugin.yaml
+        state: absent
+
+    - name: Applying CSI manifests
+      command: kubectl apply -f /home/ubuntu/cloud-provider-openstack/manifests/cinder-csi-plugin/
+
+    - name: View available drivers
+      shell: kubectl get csidrivers.storage.k8s.io
+      register: drivers
+      changed_when: false
+
+    - name: Display available drivers
+      debug:
+        msg: "{{ drivers.stdout }}"
+
+- name: Play for Others
+  hosts: master
+  become: yes
+  tasks:
+    - name: Apply ingress-nignx manifest
+      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/cloud/deploy.yaml
+
+    - name: Apply Cert Manager manifest
+      command: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml
+
+    - name: Adding repo for Helm
+      shell: |
+        curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+        sudo apt-get install apt-transport-https --yes
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+      args:
+        creates: /etc/apt/sources.list.d/helm-stable-debian.list
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Installing helm
+      package:
+        name:
+          - helm
+        state: present
+
+    - name: Installing grafana
+      command: |
+        helm repo add grafana https://grafana.github.io/helm-charts
+        helm repo update
+        kubectl create namespace monitoring
+        helm install my-grafana grafana/grafana --namespace monitoring
+      ignore_errors: true
+
+    - name: Installing argocd
+      command: |
+        kubectl create namespace argocd
+        kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      ignore_errors: true
