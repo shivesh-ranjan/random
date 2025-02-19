@@ -47,7 +47,10 @@
 
     - name: Create OCCM secret
       command: kubectl create secret -n kube-system generic cloud-config --from-file=/home/ubuntu/cloud.conf
-      ignore_errors: true
+      register: occm_result
+      failed_when:
+        - occm_result.rc == 0
+        - '"already exists" not in occm_result.stdout'
 
     - name: Installing OCCM
       shell: |
@@ -109,15 +112,18 @@
         state: present
 
     - name: Installing grafana
-      command: |
+      shell: |
         helm repo add grafana https://grafana.github.io/helm-charts
         helm repo update
         kubectl create namespace monitoring
         helm install my-grafana grafana/grafana --namespace monitoring
-      ignore_errors: true
+      register: grafana_result
+      failed_when:
+        - grafana_result.rc == 0
+        - '"already exists" not in grafana_result.stdout'
 
     - name: Installing argocd
-      command: |
+      shell: |
         kubectl create namespace argocd
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
       ignore_errors: true
