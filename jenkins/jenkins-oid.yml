@@ -1,0 +1,39 @@
+....
+authorizationStrategy:
+    roleBased:
+      roles:
+        global:
+        - entries:
+          - group: "admins"
+          name: "admin"
+          pattern: ".*"
+          permissions:
+          - "Overall/Administer"
+        - entries:
+          - group: "readonly"
+          name: "read_only"
+          pattern: ".*"
+          permissions:
+          - "Overall/Read"
+....
+securityRealm:
+    keycloak:
+      keycloakJson: |-
+        {
+          "realm": "DevOps_Internal",
+          "auth-server-url": "http://192.168.49.2:30374/",
+          "ssl-required": "external",
+          "resource": "jenkins",
+          "verify-token-audience": true,
+          "credentials": {
+            "secret": "vEheinaDvbJ6iXRqIKY5XH3UBSpuFfNb"
+          },
+          "use-resource-role-mappings": true,
+          "confidential-port": 0,
+          "policy-enforcer": {
+            "credentials": {}
+          }
+        }
+      keycloakRespectAccessTokenTimeout: false
+      keycloakValidate: false
+....
