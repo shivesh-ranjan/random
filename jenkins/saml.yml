@@ -1,0 +1,11 @@
+securityRealm:
+    saml:
+      binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      displayNameAttributeName: "urn:oid:2.5.4.42"
+      emailAttributeName: "urn:oid:1.2.840.113549.1.9.1"
+      groupsAttributeName: "Role"
+      idpMetadataConfiguration:
+        period: 1440
+        url: "http://192.168.49.2:30374/realms/DevOps_Internal/protocol/saml/descriptor"
+      maximumAuthenticationLifetime: 86400
+      usernameCaseConversion: "none"
