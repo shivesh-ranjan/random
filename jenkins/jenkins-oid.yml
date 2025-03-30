@@ -1,4 +1,4 @@
-....
+---
 authorizationStrategy:
     roleBased:
       roles:
@@ -15,7 +15,7 @@ authorizationStrategy:
           pattern: ".*"
           permissions:
           - "Overall/Read"
-....
+---
 securityRealm:
     keycloak:
       keycloakJson: |-
@@ -36,4 +36,4 @@ securityRealm:
         }
       keycloakRespectAccessTokenTimeout: false
       keycloakValidate: false
-....
+---
