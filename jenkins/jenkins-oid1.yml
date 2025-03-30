@@ -1,0 +1,16 @@
+  authorizationStrategy:
+    roleBased:
+      roles:
+        global:
+        - entries:
+          - group: "admins"
+          name: "admin"
+          pattern: ".*"
+          permissions:
+          - "Overall/Administer"
+        - entries:
+          - group: "readonly"
+          name: "read_only"
+          pattern: ".*"
+          permissions:
+          - "Overall/Read"
